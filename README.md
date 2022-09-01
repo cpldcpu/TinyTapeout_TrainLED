@@ -1,5 +1,9 @@
 ![](../../workflows/wokwi/badge.svg)
+Last Minute contribution to TinyTapeout developed life in a Train.
+This is a PWM RGB LED driver that is programmed using a serial protocol similar to WS2812.
 
+original readme
+-----
 Go to https://tinytapeout.com for instructions!
 
 # How to change the Wokwi project
