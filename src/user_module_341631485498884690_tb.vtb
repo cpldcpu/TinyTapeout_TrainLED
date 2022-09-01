@@ -1,0 +1,193 @@
+`timescale 1ns / 1ps
+
+// MCPU5 testbench
+// File ending changed to *.vtb to hide from github action
+
+module TrainLED_tb;
+
+wire [7:0] cpu_out;
+
+wire dout;
+
+reg clk, reset,din;
+
+// assign io_in = {inst_inputn, reset, clk};
+
+user_module_341631485498884690 TrainLED_top ({5'b00000,din,reset,clk},cpu_out);
+
+assign dout = cpu_out[0];
+
+initial begin
+  $dumpfile("TrainLED_tb.vcd");
+  $dumpvars(0, TrainLED_tb);
+end
+
+initial begin
+   #4000; // Wait a long time in simulation units (adjust as needed).
+   $display("Caught by trap");
+   $finish;
+ end
+
+parameter CLK_HALF_PERIOD = 5;
+parameter TCLK = 2*CLK_HALF_PERIOD;
+parameter OCLK = 4*TCLK;
+always begin
+    clk = 1'b1;
+    #(CLK_HALF_PERIOD);
+    clk = 1'b0;
+    #(CLK_HALF_PERIOD);
+end
+
+initial 
+begin
+    din = 0;
+    #(CLK_HALF_PERIOD);
+    reset = 1;
+    #(TCLK);
+    reset = 0;
+    #(TCLK);
+
+    din = 1;   // 0
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+    #(OCLK);
+
+    din = 1;   // 1
+    #(OCLK);
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+
+    din = 1;   // glitch
+    #(TCLK);
+    din = 0;
+    #(OCLK);
+    #(OCLK);
+
+    din = 1;   // glitch
+    #(TCLK);
+    #(TCLK);
+    din = 0;
+    #(OCLK);
+    #(OCLK);
+    #(OCLK);
+
+    din = 1;   // glitch
+    #(TCLK);
+    #(TCLK);
+    #(TCLK);
+    din = 0;
+    #(OCLK);
+    #(OCLK);
+    #(OCLK);
+
+    din = 1;   // ovt
+    #(OCLK);
+    #(OCLK);
+    #(OCLK);
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+    #(OCLK);
+
+    din = 1;   // 0
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+    #(OCLK);
+
+    din = 1;   // 1
+    #(OCLK);
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+
+    din = 1;   // 0
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+    #(OCLK);
+
+    din = 1;   // 1
+    #(OCLK);
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+
+    din = 1;   // 0
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+    #(OCLK);
+
+    din = 1;   // 1
+    #(OCLK);
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+
+    din = 1;   // 0
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+    #(OCLK);
+
+    din = 1;   // 1
+    #(OCLK);
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+
+    din = 1;   // 0
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+    #(OCLK);
+
+    din = 1;   // 1
+    #(OCLK);
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+
+    din = 1;   // 0
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+    #(OCLK);
+
+    din = 1;   // 1
+    #(OCLK);
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+
+    din = 1;   // 0
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+    #(OCLK);
+
+    din = 1;   // 1
+    #(OCLK);
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+
+    din = 1;   // 0
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+    #(OCLK);
+
+    din = 1;   // 1
+    #(OCLK);
+    #(OCLK);
+    din = 0;
+    #(OCLK);
+
+end
+
+
+endmodule
