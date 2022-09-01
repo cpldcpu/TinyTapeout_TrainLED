@@ -28,14 +28,16 @@ output led1,led2,led3;
 reg [3:0] finecount;
 reg outdff;
 reg [11:00] shiftregister;
+reg [11:00] shiftlatch;
 reg [3:0] bitcount;
 reg [7:0] resetcount;
-reg mode;  // 0=receive, 1=forward
-wire dataready;
+reg [3:0] pwmcounter;
+reg [1:0] mode;  // 0=receive, 1=forward, 2=reset
+// wire dataready;
 
-PWMEngine PWM1 (.clk(clk),.rst(rst),.dataready(dataready),.PW_in(shiftregister[3:0]),.led(led1));
-PWMEngine PWM2 (.clk(clk),.rst(rst),.dataready(dataready),.PW_in(shiftregister[7:4]),.led(led2));
-PWMEngine PWM3 (.clk(clk),.rst(rst),.dataready(dataready),.PW_in(shiftregister[11:8]),.led(led3));
+PWMEngine PWM1 (.clk(clk),.rst(rst),.counter(pwmcounter),.PW_in(shiftlatch[3:0]),.led(led1));
+PWMEngine PWM2 (.clk(clk),.rst(rst),.counter(pwmcounter),.PW_in(shiftlatch[7:4]),.led(led2));
+PWMEngine PWM3 (.clk(clk),.rst(rst),.counter(pwmcounter),.PW_in(shiftlatch[11:8]),.led(led3));
 
     always @(posedge clk)
         if (rst) begin
@@ -44,11 +46,14 @@ PWMEngine PWM3 (.clk(clk),.rst(rst),.dataready(dataready),.PW_in(shiftregister[1
             shiftregister <= 0;
             bitcount <= 0;
             mode <= 0;
+            pwmcounter <=0;
             resetcount <=0;
         end
         else begin
-            
-            // state machine for Tranceiver
+            // PWM mastercounter
+            pwmcounter <= pwmcounter + 1'b1;
+
+            // data recovery
             if ((finecount < 4'b1011) && (finecount >= 4'b0010))
                     finecount <= finecount + 1'b1;
             else 
@@ -58,71 +63,83 @@ PWMEngine PWM3 (.clk(clk),.rst(rst),.dataready(dataready),.PW_in(shiftregister[1
                     if (~din)
                         finecount <= 0;
 
-            if (~mode) begin          
+            // state machine
+            if (mode == 2'b00) begin          
                 // handle data store (mode=0, receive)
                 if (finecount == 4'b0110) begin
                     shiftregister <= {shiftregister[10:0], din};
                     bitcount <= bitcount + 1'b1;
                     if (bitcount == 4'b1011)
-                        mode = 1'b1;        
+                        mode <= 2'b01;        
                 end
                 outdff <= 1'b0;
             end
-            else begin    
-                // handle data out (forward)        
-                case(finecount)
-                    4'b0010: outdff <= 1'b1; 
-                    4'b0110: outdff <= din;
-                    4'b1010: outdff <= 1'b0;
-                endcase;
-            end
+            else // mode reset
+                if ((mode == 2'b10) && (finecount == 4'b0010)) begin
+                    mode <= 2'b00;
+                    bitcount <= 4'b0000;
+                end 
+                else begin    
+                    // handle data out (forward)        
+                    case(finecount)
+                        4'b0010: outdff <= 1'b1; 
+                        4'b0110: outdff <= din;
+                        4'b1010: outdff <= 1'b0;
+                    endcase;
+                    end
 
             // Handle reset. 
             // Resetcounter is increased while no bits arrive
             if (finecount <= 4'b0010) begin
                 resetcount <= resetcount + 1'b1;
                 if (resetcount == 8'd96) begin  // reset after 8 bit times
-                    mode <= 1'b0;
-                    bitcount <= 0; 
+                    mode <= 2'b10;
+                    // bitcount <= 0; 
                 end
             end 
             else 
                 resetcount <= 0;
         end
 
+    // Handle PWMlatch
+    always@(*)
+        if (clk && (pwmcounter == 4'b1111) && (bitcount == 4'b1100) && (mode == 2'b10) ) begin
+            shiftlatch <= shiftregister;
+        end 
+
 assign dout = outdff;
-assign dataready = (bitcount == 4'b1100);  // Careful! If PWM cycle time exceeds reset time, this will stop working. But it is fine for now
+// assign dataready = (bitcount == 4'b1100);  // Careful! If PWM cycle time exceeds reset time, this will stop working. But it is fine for now
 
 endmodule
 
-module PWMEngine(clk,rst,PW_in,dataready,led);
+module PWMEngine(clk,rst,PW_in,counter,led);
 
 input [3:0] PW_in;   // 
+input [3:0] counter;   // 
 input clk;
 input rst;
-input dataready;
 output led;
 
-reg [3:0] counter ;
-reg [3:0] latcheddata ;
+// reg [3:0] counter ;
+// reg [3:0] latcheddata ;
 reg LEDdff;
 
 	always @(posedge clk)
 		if (rst) begin
-			counter <= 0;	
+			// counter <= 0;	
             LEDdff <= 0;
-            latcheddata <=1;
+            // latcheddata <=1;
 		end
 		else begin
-            counter <= counter + 1;
+            // counter <= counter + 1;
 
-            if (counter == latcheddata)
+            if (counter == PW_in)
                 LEDdff <= 1'b0;
             else if (counter == 0)
                 LEDdff <= 1'b1;
 
-            if ((~counter == 4'b1111) && dataready)
-                latcheddata <= PW_in;
+            // if ((~counter == 4'b1111) && dataready)
+            //     latcheddata <= PW_in;
         end
 
 assign led = LEDdff;
