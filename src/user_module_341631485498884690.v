@@ -34,6 +34,8 @@ reg mode;  // 0=receive, 1=forward
 wire dataready;
 
 PWMEngine PWM1 (.clk(clk),.rst(rst),.dataready(dataready),.PW_in(shiftregister[3:0]),.led(led1));
+PWMEngine PWM2 (.clk(clk),.rst(rst),.dataready(dataready),.PW_in(shiftregister[7:4]),.led(led2));
+PWMEngine PWM3 (.clk(clk),.rst(rst),.dataready(dataready),.PW_in(shiftregister[11:8]),.led(led3));
 
     always @(posedge clk)
         if (rst) begin
@@ -61,7 +63,7 @@ PWMEngine PWM1 (.clk(clk),.rst(rst),.dataready(dataready),.PW_in(shiftregister[3
                 if (finecount == 4'b0110) begin
                     shiftregister <= {shiftregister[10:0], din};
                     bitcount <= bitcount + 1'b1;
-                    if (bitcount == 4'b0011)
+                    if (bitcount == 4'b1011)
                         mode = 1'b1;        
                 end
                 outdff <= 1'b0;
@@ -89,7 +91,7 @@ PWMEngine PWM1 (.clk(clk),.rst(rst),.dataready(dataready),.PW_in(shiftregister[3
         end
 
 assign dout = outdff;
-assign dataready = (bitcount == 4'b0100);  // Careful! If PWM cycle time exceeds reset time, this will stop working. But it is fine for now
+assign dataready = (bitcount == 4'b1100);  // Careful! If PWM cycle time exceeds reset time, this will stop working. But it is fine for now
 
 endmodule
 
