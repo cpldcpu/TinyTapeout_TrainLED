@@ -33,7 +33,6 @@ reg [3:0] bitcount;
 reg [7:0] resetcount;
 reg [3:0] pwmcounter;
 reg [1:0] mode;  // 0=receive, 1=forward, 2=reset
-// wire dataready;
 
 PWMEngine PWM1 (.clk(clk),.rst(rst),.counter(pwmcounter),.PW_in(shiftlatch[3:0]),.led(led1));
 PWMEngine PWM2 (.clk(clk),.rst(rst),.counter(pwmcounter),.PW_in(shiftlatch[7:4]),.led(led2));
@@ -94,7 +93,6 @@ PWMEngine PWM3 (.clk(clk),.rst(rst),.counter(pwmcounter),.PW_in(shiftlatch[11:8]
                 resetcount <= resetcount + 1'b1;
                 if (resetcount == 8'd96) begin  // reset after 8 bit times
                     mode <= 2'b10;
-                    // bitcount <= 0; 
                 end
             end 
             else 
@@ -108,7 +106,6 @@ PWMEngine PWM3 (.clk(clk),.rst(rst),.counter(pwmcounter),.PW_in(shiftlatch[11:8]
         end 
 
 assign dout = outdff;
-// assign dataready = (bitcount == 4'b1100);  // Careful! If PWM cycle time exceeds reset time, this will stop working. But it is fine for now
 
 endmodule
 
@@ -120,26 +117,18 @@ input clk;
 input rst;
 output led;
 
-// reg [3:0] counter ;
-// reg [3:0] latcheddata ;
 reg LEDdff;
 
 	always @(posedge clk)
 		if (rst) begin
-			// counter <= 0;	
             LEDdff <= 0;
-            // latcheddata <=1;
 		end
 		else begin
-            // counter <= counter + 1;
 
             if (counter == PW_in)
                 LEDdff <= 1'b0;
             else if (counter == 0)
                 LEDdff <= 1'b1;
-
-            // if ((~counter == 4'b1111) && dataready)
-            //     latcheddata <= PW_in;
         end
 
 assign led = LEDdff;
